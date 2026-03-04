@@ -1,0 +1,188 @@
+/* ── Reset & base ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #1a1a2e;
+  color: #e0d6c8;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── App wrapper ── */
+#app {
+  width: 100%;
+  max-width: 1100px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Header ── */
+header h1 {
+  font-size: 1.5rem;
+  letter-spacing: 0.05em;
+  color: #e8c87a;
+  text-shadow: 0 0 12px #e8c87a55;
+}
+
+/* ── Controls bar ── */
+#controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  background: #16213e;
+  border: 1px solid #334;
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.slider-group {
+  flex: 1 1 200px;
+  min-width: 180px;
+}
+
+/* ── Buttons ── */
+button {
+  background: #2e4070;
+  color: #e0d6c8;
+  border: 1px solid #4a6090;
+  border-radius: 5px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.15s, transform 0.1s;
+}
+
+button:hover:not(:disabled) {
+  background: #3a5490;
+  transform: translateY(-1px);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+button#playPauseBtn {
+  min-width: 90px;
+  font-weight: bold;
+  background: #1e5c3a;
+  border-color: #2e8c5a;
+}
+
+button#playPauseBtn:hover:not(:disabled) {
+  background: #2a7a50;
+}
+
+button#playPauseBtn.playing {
+  background: #7a2020;
+  border-color: #aa3030;
+}
+
+/* ── File input ── */
+input[type="file"] {
+  font-size: 0.8rem;
+  color: #ccc;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+/* ── Range sliders ── */
+input[type="range"] {
+  flex: 1;
+  accent-color: #e8c87a;
+  cursor: pointer;
+}
+
+label {
+  font-size: 0.8rem;
+  color: #aaa;
+  white-space: nowrap;
+}
+
+span {
+  font-size: 0.8rem;
+  color: #ccc;
+  white-space: nowrap;
+  min-width: 80px;
+}
+
+/* ── Stats bar ── */
+#stats {
+  display: flex;
+  gap: 24px;
+  font-size: 0.85rem;
+  color: #b0a898;
+  padding: 4px 8px;
+}
+
+#stats span { color: #d4c99a; min-width: unset; }
+
+/* ── Canvas wrapper ── */
+#canvasWrapper {
+  position: relative;
+  border: 2px solid #334;
+  border-radius: 8px;
+  overflow: auto;
+  background: #111;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#mazeCanvas {
+  display: block;
+  image-rendering: pixelated;
+}
+
+/* ── Drop overlay ── */
+#dropOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a1a2ecc;
+  border: 3px dashed #e8c87a55;
+  border-radius: 8px;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+#dropOverlay.hidden {
+  opacity: 0;
+}
+
+#dropOverlay p {
+  font-size: 1rem;
+  color: #e8c87a99;
+}
+
+#dropOverlay code {
+  background: #33330044;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+/* ── Drag-over highlight ── */
+#canvasWrapper.dragover {
+  border-color: #e8c87a;
+  background: #1e1e0e44;
+}

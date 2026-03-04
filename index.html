@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mycelium Intelligence Visualizer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>🍄 Mycelium Intelligence Visualizer</h1>
+    </header>
+
+    <div id="controls">
+      <!-- File loading -->
+      <div class="control-group">
+        <label for="fileInput">Load JSON</label>
+        <input type="file" id="fileInput" accept=".json" />
+        <button id="loadSample">Load Sample</button>
+      </div>
+
+      <!-- Playback controls -->
+      <div class="control-group">
+        <button id="playPauseBtn" disabled>▶ Play</button>
+        <button id="stepBackBtn" disabled>◀</button>
+        <button id="stepForwardBtn" disabled>▶</button>
+        <button id="resetBtn" disabled>⏮ Reset</button>
+      </div>
+
+      <!-- Step slider -->
+      <div class="control-group slider-group">
+        <label for="stepSlider">Step</label>
+        <input type="range" id="stepSlider" min="0" value="0" disabled />
+        <span id="stepLabel">Step: 0 / 0</span>
+      </div>
+
+      <!-- Speed slider -->
+      <div class="control-group slider-group">
+        <label for="speedSlider">Speed</label>
+        <input type="range" id="speedSlider" min="10" max="500" value="100" />
+        <span id="speedLabel">100 ms</span>
+      </div>
+
+      <!-- Cell size slider -->
+      <div class="control-group slider-group">
+        <label for="cellSizeSlider">Cell Size</label>
+        <input type="range" id="cellSizeSlider" min="10" max="80" value="40" />
+        <span id="cellSizeLabel">40 px</span>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div id="stats">
+      <span id="nodeCount">Nodes: —</span>
+      <span id="edgeCount">Edges: —</span>
+      <span id="maxWeight">Max Weight: —</span>
+    </div>
+
+    <!-- Canvas container -->
+    <div id="canvasWrapper">
+      <canvas id="mazeCanvas"></canvas>
+      <div id="dropOverlay">
+        <p>Drop <code>sim_output.json</code> here</p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
