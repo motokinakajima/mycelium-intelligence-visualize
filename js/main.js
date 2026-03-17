@@ -4,7 +4,7 @@
  */
 
 import { loadFromFile, loadFromUrl } from './loader.js';
-import { drawStep, drawMaze, computeStats, setCellSize, getCellSize } from './renderer.js';
+import { drawStep, drawMaze, computeStats, setCellSize, getCellSize, findEdgeAtPosition } from './renderer.js';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────
 const fileInput       = document.getElementById('fileInput');
@@ -22,6 +22,9 @@ const cellSizeLabel   = document.getElementById('cellSizeLabel');
 const nodeCountEl     = document.getElementById('nodeCount');
 const edgeCountEl     = document.getElementById('edgeCount');
 const maxWeightEl     = document.getElementById('maxWeight');
+const nutritionMinEl  = document.getElementById('nutritionMin');
+const nutritionAvgEl  = document.getElementById('nutritionAvg');
+const nutritionMaxEl  = document.getElementById('nutritionMax');
 const canvas          = document.getElementById('mazeCanvas');
 const canvasWrapper   = document.getElementById('canvasWrapper');
 const dropOverlay     = document.getElementById('dropOverlay');
@@ -32,6 +35,38 @@ let currentStep = 0;
 let playing     = false;
 let lastTime    = 0;
 let interval    = 100; // ms
+let globalNutritionRange = { min: 0, max: 1 };
+let hoveredEdge = null;
+let hoverMouse = { x: 0, y: 0 };
+
+function getNodeNutrition(node) {
+  const nutrition = Number(node?.nutrition);
+  if (Number.isFinite(nutrition)) return nutrition;
+  const energy = Number(node?.energy);
+  if (Number.isFinite(energy)) return energy;
+  return 0;
+}
+
+function computeGlobalNutritionRange(steps) {
+  let min = Number.POSITIVE_INFINITY;
+  let max = Number.NEGATIVE_INFINITY;
+
+  for (const step of steps) {
+    for (const node of step.nodes) {
+      const value = getNodeNutrition(node);
+      min = Math.min(min, value);
+      max = Math.max(max, value);
+    }
+  }
+
+  if (!Number.isFinite(min) || !Number.isFinite(max)) {
+    return { min: 0, max: 1 };
+  }
+  if (max <= min) {
+    return { min, max: min + 1 };
+  }
+  return { min, max };
+}
 
 // ── Init ───────────────────────────────────────────────────────────────────
 
@@ -39,6 +74,8 @@ function onDataLoaded(data) {
   simData     = data;
   currentStep = 0;
   playing     = false;
+  hoveredEdge = null;
+  globalNutritionRange = computeGlobalNutritionRange(simData.steps);
   updatePlayPauseBtn();
 
   const maxStep = simData.steps.length - 1;
@@ -57,16 +94,35 @@ function onDataLoaded(data) {
 function renderCurrentStep() {
   if (!simData) return;
   const stepData = simData.steps[currentStep];
-  drawStep(canvas, simData.maze, stepData.nodes);
+  drawStep(canvas, simData.maze, stepData.nodes, {
+    nutritionMin: globalNutritionRange.min,
+    nutritionMax: globalNutritionRange.max,
+    hoveredEdge,
+    hoverX: hoverMouse.x,
+    hoverY: hoverMouse.y
+  });
 
   const stats = computeStats(stepData.nodes);
   nodeCountEl.textContent = `Nodes: ${stats.nodeCount}`;
   edgeCountEl.textContent = `Edges: ${stats.edgeCount}`;
   maxWeightEl.textContent = `Max Weight: ${stats.maxWeight.toFixed(3)}`;
+  nutritionMinEl.textContent = `Nut Min: ${stats.nutritionMin.toFixed(4)}`;
+  nutritionAvgEl.textContent = `Nut Avg: ${stats.nutritionAvg.toFixed(4)}`;
+  nutritionMaxEl.textContent = `Nut Max: ${stats.nutritionMax.toFixed(4)}`;
 
   const total = simData.steps.length - 1;
   stepLabel.textContent = `Step: ${currentStep} / ${total}`;
   stepSlider.value      = currentStep;
+}
+
+function getCanvasMousePosition(event) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  return {
+    x: (event.clientX - rect.left) * scaleX,
+    y: (event.clientY - rect.top) * scaleY
+  };
 }
 
 function updatePlayPauseBtn() {
@@ -181,6 +237,26 @@ cellSizeSlider.addEventListener('input', () => {
   const size = parseInt(cellSizeSlider.value, 10);
   setCellSize(size);
   cellSizeLabel.textContent = `${size} px`;
+  hoveredEdge = null;
+  renderCurrentStep();
+});
+
+canvas.addEventListener('mousemove', (event) => {
+  if (!simData) return;
+
+  const pos = getCanvasMousePosition(event);
+  hoverMouse = pos;
+
+  const stepData = simData.steps[currentStep];
+  hoveredEdge = findEdgeAtPosition(stepData.nodes, pos.x, pos.y, Math.max(6, getCellSize() * 0.18));
+  canvas.style.cursor = hoveredEdge ? 'pointer' : 'default';
+  renderCurrentStep();
+});
+
+canvas.addEventListener('mouseleave', () => {
+  if (!simData) return;
+  hoveredEdge = null;
+  canvas.style.cursor = 'default';
   renderCurrentStep();
 });
 

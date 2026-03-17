@@ -126,6 +126,7 @@ span {
 /* ── Stats bar ── */
 #stats {
   display: flex;
+  flex-wrap: wrap;
   gap: 24px;
   font-size: 0.85rem;
   color: #b0a898;
