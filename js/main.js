@@ -4,7 +4,7 @@
  */
 
 import { loadFromFile, loadFromUrl } from './loader.js';
-import { drawStep, drawMaze, computeStats, setCellSize, getCellSize, findEdgeAtPosition } from './renderer.js';
+import { drawStep, drawMaze, computeStats, setCellSize, getCellSize, findEdgeAtPosition, captureAndDownloadScreenshot } from './renderer.js';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────
 const fileInput       = document.getElementById('fileInput');
@@ -13,6 +13,7 @@ const playPauseBtn    = document.getElementById('playPauseBtn');
 const stepBackBtn     = document.getElementById('stepBackBtn');
 const stepForwardBtn  = document.getElementById('stepForwardBtn');
 const resetBtn        = document.getElementById('resetBtn');
+const screenshotBtn   = document.getElementById('screenshotBtn');
 const stepSlider      = document.getElementById('stepSlider');
 const speedSlider     = document.getElementById('speedSlider');
 const cellSizeSlider  = document.getElementById('cellSizeSlider');
@@ -87,6 +88,8 @@ function onDataLoaded(data) {
     el.disabled = false;
   });
 
+  screenshotBtn.disabled = false;
+
   dropOverlay.classList.add('hidden');
   renderCurrentStep();
 }
@@ -111,7 +114,7 @@ function renderCurrentStep() {
   nutritionMaxEl.textContent = `Nut Max: ${stats.nutritionMax.toFixed(4)}`;
 
   const total = simData.steps.length - 1;
-  stepLabel.textContent = `Step: ${currentStep} / ${total}`;
+  stepLabel.textContent = `Tick: ${currentStep} / ${total}`;
   stepSlider.value      = currentStep;
 }
 
@@ -258,6 +261,16 @@ canvas.addEventListener('mouseleave', () => {
   hoveredEdge = null;
   canvas.style.cursor = 'default';
   renderCurrentStep();
+});
+
+// Screenshot
+screenshotBtn.addEventListener('click', () => {
+  if (!simData) return;
+  const stepData = simData.steps[currentStep];
+  captureAndDownloadScreenshot(simData.maze, stepData.nodes, {
+    nutritionMin: globalNutritionRange.min,
+    nutritionMax: globalNutritionRange.max
+  }, 3, currentStep);
 });
 
 // ── Drag & Drop ────────────────────────────────────────────────────────────

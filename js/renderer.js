@@ -171,6 +171,8 @@ export function drawMaze(canvas, maze) {
 export function drawStep(canvas, maze, nodes, options = {}) {
   const ctx = canvas.getContext('2d');
   const hoveredEdge = options.hoveredEdge || null;
+  const lineWidthScale = Number.isFinite(options.lineWidthScale) ? options.lineWidthScale : 1;
+  const glowScale = Number.isFinite(options.glowScale) ? options.glowScale : 1;
 
   // 1. 迷路背景
   drawMaze(canvas, maze);
@@ -199,12 +201,12 @@ export function drawStep(canvas, maze, nodes, options = {}) {
       );
 
       ctx.strokeStyle = weightToColor(edge.w);
-      ctx.lineWidth   = Math.min(edge.w * 3, 8) + (isHovered ? 2.5 : 0);
-      ctx.lineCap     = 'round';
+      ctx.lineWidth = Math.min(edge.w * 3 * lineWidthScale, 8 * lineWidthScale) + (isHovered ? 2.5 * lineWidthScale : 0);
+      ctx.lineCap = 'round';
       if (isHovered) {
         hoveredEdgeDrawn = true;
         ctx.shadowColor = 'rgba(255, 245, 180, 0.9)';
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = Math.round(10 * glowScale);
       } else {
         ctx.shadowColor = 'transparent';
         ctx.shadowBlur = 0;
@@ -228,7 +230,7 @@ export function drawStep(canvas, maze, nodes, options = {}) {
     const isSource = Boolean(node.source);
 
     const glowRadius = 7 + t * (CELL_SIZE * 0.7);
-    const coreRadius = 3 + t * 3;
+    const coreRadius = (3 + t * 3) * glowScale;
     const glowAlpha = 0.18 + t * 0.42;
 
     const glowColor = isSource
@@ -246,7 +248,7 @@ export function drawStep(canvas, maze, nodes, options = {}) {
 
     ctx.fillStyle = isSource ? '#8ee6a0' : '#e8c87a';
     ctx.strokeStyle = isSource ? '#2f7a44' : '#8b5e1a';
-    ctx.lineWidth   = 1.5;
+    ctx.lineWidth = 1.5 * glowScale;
     ctx.beginPath();
     ctx.arc(cx, cy, coreRadius, 0, Math.PI * 2);
     ctx.fill();
@@ -257,11 +259,11 @@ export function drawStep(canvas, maze, nodes, options = {}) {
     ctx.font = `${fontSize}px Segoe UI, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2 * glowScale;
     ctx.strokeStyle = 'rgba(0, 0, 0, 0.45)';
-    ctx.strokeText(label, cx, cy + coreRadius + 2);
+    ctx.strokeText(label, cx, cy + coreRadius + 2 * glowScale);
     ctx.fillStyle = '#f4f6ea';
-    ctx.fillText(label, cx, cy + coreRadius + 2);
+    ctx.fillText(label, cx, cy + coreRadius + 2 * glowScale);
   }
 
   if (hoveredEdge && hoveredEdgeDrawn) {
@@ -272,15 +274,15 @@ export function drawStep(canvas, maze, nodes, options = {}) {
 
     ctx.font = `${fontSize}px Segoe UI, sans-serif`;
     const textWidth = ctx.measureText(text).width;
-    const padX = 6;
-    const boxH = fontSize + 8;
+    const padX = Math.max(6, Math.round(6 * glowScale));
+    const boxH = fontSize + Math.round(8 * glowScale);
     const boxW = textWidth + padX * 2;
     const x = Math.max(2, Math.min(canvas.width - boxW - 2, tipX));
     const y = Math.max(2, Math.min(canvas.height - boxH - 2, tipY));
 
     ctx.fillStyle = 'rgba(18, 24, 30, 0.85)';
     ctx.strokeStyle = 'rgba(255, 220, 140, 0.9)';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = Math.max(1, glowScale);
     ctx.beginPath();
     ctx.rect(x, y, boxW, boxH);
     ctx.fill();
@@ -326,4 +328,46 @@ export function computeStats(nodes) {
   const nutritionAvg = nodes.length > 0 ? nutritionSum / nodes.length : 0;
 
   return { nodeCount: nodes.length, edgeCount, maxWeight, nutritionMin, nutritionAvg, nutritionMax };
+}
+
+/**
+ * 高解像度 PNG としてキャンバスをキャプチャ＆ダウンロード
+ * @param {Object} maze
+ * @param {Array} nodes
+ * @param {Object} options { nutritionMin, nutritionMax, hoveredEdge, hoverX, hoverY }
+ * @param {number} scale 倍率（デフォルト 3 = 3倍高品質）
+ * @param {number} tickNumber 現在のティック番号
+ */
+export function captureAndDownloadScreenshot(maze, nodes, options = {}, scale = 3, tickNumber = 0) {
+  const originalCellSize = CELL_SIZE;
+  const newCellSize = originalCellSize * scale;
+  CELL_SIZE = newCellSize;
+
+  const screenshotCanvas = document.createElement('canvas');
+  screenshotCanvas.width = maze.width * newCellSize;
+  screenshotCanvas.height = maze.height * newCellSize;
+
+  const screenshotOptions = {
+    ...options,
+    lineWidthScale: scale,
+    glowScale: scale
+  };
+
+  drawStep(screenshotCanvas, maze, nodes, screenshotOptions);
+
+  CELL_SIZE = originalCellSize;
+
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+  const filename = `mycelium-tick-${tickNumber}-${timestamp}.png`;
+
+  screenshotCanvas.toBlob((blob) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 'image/png', 1.0);
 }
